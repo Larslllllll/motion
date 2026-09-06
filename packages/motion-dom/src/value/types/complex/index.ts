@@ -41,7 +41,7 @@ export interface ComplexValueInfo {
 
 // this regex consists of the `singleCssVariableRegex|rgbHSLValueRegex|digitRegex`
 const complexRegex =
-    /var\s*\(\s*--(?:[\w-]+\s*|[\w-]+\s*,(?:\s*[^)(\s]|\s*\((?:[^)(]|\([^)(]*\))*\))+\s*)\)|#[\da-f]{3,8}|(?:rgb|hsl)a?\((?:-?[\d.]+%?[,\s]+){2}-?[\d.]+%?\s*(?:[,/]\s*)?(?:\b\d+(?:\.\d+)?|\.\d+)?%?\)|-?(?:\d+(?:\.\d+)?|\.\d+)/giu
+    /[a-z]+\d[a-z\d]*|var\s*\(\s*--(?:[\w-]+\s*|[\w-]+\s*,(?:\s*[^)(\s]|\s*\((?:[^)(]|\([^)(]*\))*\))+\s*)\)|#[\da-f]{3,8}|(?:rgb|hsl)a?\((?:-?[\d.]+%?[,\s]+){2}-?[\d.]+%?\s*(?:[,/]\s*)?(?:\b\d+(?:\.\d+)?|\.\d+)?%?\)|-?(?:\d+(?:\.\d+)?|\.\d+)/giu
 
 export function analyseComplexValue(
     value: AnyResolvedKeyframe
@@ -66,6 +66,10 @@ export function analyseComplexValue(
             indexes.var.push(i)
             types.push(VAR_TOKEN)
             values.push(parsedValue)
+        } else if (/^[a-z]/i.test(parsedValue)) {
+            // Identifier with embedded digits (matrix3d, translate3d…) — not a number token.
+            // Return unchanged so it stays in the split text and is not counted as a token.
+            return parsedValue
         } else {
             indexes.number.push(i)
             types.push(NUMBER_TOKEN)
