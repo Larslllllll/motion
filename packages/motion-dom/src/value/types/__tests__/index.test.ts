@@ -3,6 +3,7 @@ import { hex } from "../color/hex"
 import { hsla } from "../color/hsla"
 import { rgba, rgbUnit } from "../color/rgba"
 import { complex } from "../complex"
+import { analyseComplexValue } from "../complex"
 import { filter } from "../complex/filter"
 import { mask } from "../complex/mask"
 import { alpha } from "../numbers"
@@ -173,6 +174,47 @@ describe("complex value type", () => {
             complex.getAnimatableNone("calc(20% + 200px * 2)")
         ).toBe("calc(0% + 0px * 0)")
     })
+    // https://github.com/motiondivision/motion/issues/2654
+    // matrix3d, translate3d, rotate3d, scale3d contain digits in their identifiers.
+    // The tokeniser must not treat those embedded digits as standalone numbers.
+    it("parse does not treat identifier-embedded digits as numbers (matrix3d)", () => {
+        const M3D = "matrix3d(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1)"
+        expect(complex.parse(M3D)).toEqual([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1])
+    })
+
+    it("analyseComplexValue preserves matrix3d identifier in split (matrix3d)", () => {
+        const M3D = "matrix3d(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1)"
+        expect(analyseComplexValue(M3D).split[0]).toBe("matrix3d(")
+    })
+
+    it("createTransformer round-trips matrix3d correctly", () => {
+        const M3D = "matrix3d(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1)"
+        expect(complex.createTransformer(M3D)(complex.parse(M3D))).toBe(M3D)
+    })
+
+    it("getAnimatableNone produces a valid matrix3d (not matrix0d)", () => {
+        const M3D = "matrix3d(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1)"
+        expect(complex.getAnimatableNone(M3D)).toBe(
+            "matrix3d(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)"
+        )
+    })
+
+    it("parse handles translate3d correctly", () => {
+        expect(complex.parse("translate3d(10px, 20px, 0)")).toEqual([10, 20, 0])
+    })
+
+    it("parse handles rotate3d correctly", () => {
+        expect(complex.parse("rotate3d(1, 1, 1, 45deg)")).toEqual([1, 1, 1, 45])
+    })
+
+    it("parse handles scale3d correctly", () => {
+        expect(complex.parse("scale3d(2, 2, 2)")).toEqual([2, 2, 2])
+    })
+
+    it("parse handles perspective combined with translate3d", () => {
+        expect(complex.parse("perspective(500px) translate3d(10px, 10px, 0)")).toEqual([500, 10, 10, 0])
+    })
+
 })
 
 const red = {
