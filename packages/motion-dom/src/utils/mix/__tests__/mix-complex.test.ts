@@ -1,4 +1,5 @@
 import { mixComplex } from "../complex"
+import { complex } from "../../value/types/complex"
 
 test("mixComplex", () => {
     expect(mixComplex("20px", "10px")(0.5)).toBe("15px")
@@ -61,4 +62,12 @@ test("mixComplex will only interpolate values outside of CSS variables", () => {
     expect(mixer(0)).toBe("rgba(255, 255, 255, 1) 0 var(--grey, 0px) 10px")
     expect(mixer(0.5)).toBe("rgba(180, 180, 180, 1) 0 var(--grey, 10px) 5px")
     expect(mixer(1)).toBe("rgba(0, 0, 0, 1) 0 var(--grey, 10px) 0px")
+})
+
+
+test("mixComplex interpolates matrix3d from its animatable none", () => {
+    const target = "matrix3d(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1)"
+    expect(mixComplex(complex.getAnimatableNone(target), target)(0.5)).toBe(
+        "matrix3d(0.5, 0, 0, 0, 0, 0.5, 0, 0, 0, 0, 0.5, 0, 0, 0, 0, 0.5)"
+    )
 })
